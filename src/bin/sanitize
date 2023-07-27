@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+# The directory the script will check for configuration files
+SANITIZE_CONFIG_DIR="${SANITIZE_CONFIG_DIR:=/home/$(whoami)/.config/sanitize}"
+
+# The file extension the script will check for configuration files
+SANITIZE_CONFIG_FILE_EXTENSION="${SANITIZE_CONFIG_FILE_EXTENSION:=cfg}"
+
+function CheckDependencies(){
+
+    # The list of dependencies required for this script
+    local dependencies
+    dependencies=(
+        "cat"
+        "find"
+        "sed"
+    )
+
+    # This will be used to flag any error that occurs
+    local error
+    error=0
+
+    # Loop over all the dependencies and check if they exist
+    local dependency
+    for dependency in "${dependencies[@]}";
+    do
+        # If a dependency does not exist we will print an error to stderr and flag the error variable
+        if ! which "${dependency}" >/dev/null 2>&1;
+        then
+            echo "ERROR: Dependency '${dependency}' not found." >&2
+            error=1
+        fi
+    done
+
+    return $error
+}
+
+function CheckConfigDir() {
+    # Check if the directory exists
+    if [[ ! -d "${SANITIZE_CONFIG_DIR}" ]];
+    then
+        echo "ERROR: Config folder '${SANITIZE_CONFIG_DIR}' not found." >&2
+        return 1
+    fi
+
+    return 0
+}
+
+function ExecuteReplacements() {
+
+    # Get the file list
+    local configFileList
+    readarray -t configFileList < <(find ${SANITIZE_CONFIG_DIR} -type f -name *.${SANITIZE_CONFIG_FILE_EXTENSION})
+
+    # If we have no configuration files then just echo the input and return
+    if [[ -z ${configFileList[@]} ]];
+    then
+        echo $data
+        return
+    fi
+
+    local sedCommand
+    sedCommand="cat"
+
+    # Loop over all the files and apply sed
+    local currentFile
+    for currentFile in "${configFileList[@]}";
+    do
+        sedCommand="${sedCommand} | sed '$(cat ${currentFile})'"
+    done
+
+    eval "${sedCommand}"
+}
+
+function Main() {
+    CheckDependencies
+    CheckConfigDir
+    ExecuteReplacements
+}
+
+Main
