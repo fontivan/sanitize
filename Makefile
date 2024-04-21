@@ -10,7 +10,7 @@ PY = python3
 VENV = venv
 BIN=$(ROOT_DIR)/$(VENV)/bin
 
-all: bashate shellcheck test
+all: bashate shellcheck test yamllint
 
 $(VENV): requirements.txt
 	$(PY) -m venv $(VENV)
@@ -28,6 +28,10 @@ shellcheck: $(VENV)
 .PHONY: test
 test:
 	$(ROOT_DIR)/test/test.sh
+
+.PHONY: yamllint
+yamllint: $(VENV)
+	$(BIN)/yamllint .
 
 clean:
 	rm -rf $(VENV)
