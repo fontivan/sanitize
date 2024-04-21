@@ -1,0 +1,2 @@
+This data has a secret called "myredactedusername" that will be replaced.
+This data has a secret called "192.168.0.123" that will be replaced.

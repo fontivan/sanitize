@@ -8,7 +8,7 @@ SANITIZE_CONFIG_DIR="${SANITIZE_CONFIG_DIR:=/home/$(whoami)/.config/sanitize}"
 # The file extension the script will check for configuration files
 SANITIZE_CONFIG_FILE_EXTENSION="${SANITIZE_CONFIG_FILE_EXTENSION:=cfg}"
 
-function CheckDependencies(){
+function CheckDependencies {
 
     # The list of dependencies required for this script
     local dependencies
@@ -24,11 +24,9 @@ function CheckDependencies(){
 
     # Loop over all the dependencies and check if they exist
     local dependency
-    for dependency in "${dependencies[@]}";
-    do
+    for dependency in "${dependencies[@]}"; do
         # If a dependency does not exist we will print an error to stderr and flag the error variable
-        if ! which "${dependency}" >/dev/null 2>&1;
-        then
+        if ! which "${dependency}" >/dev/null 2>&1; then
             echo "ERROR: Dependency '${dependency}' not found." >&2
             error=1
         fi
@@ -37,10 +35,9 @@ function CheckDependencies(){
     return $error
 }
 
-function CheckConfigDir() {
+function CheckConfigDir {
     # Check if the directory exists
-    if [[ ! -d "${SANITIZE_CONFIG_DIR}" ]];
-    then
+    if [[ ! -d "${SANITIZE_CONFIG_DIR}" ]]; then
         echo "ERROR: Config folder '${SANITIZE_CONFIG_DIR}' not found." >&2
         return 1
     fi
@@ -48,16 +45,16 @@ function CheckConfigDir() {
     return 0
 }
 
-function ExecuteReplacements() {
+function ExecuteReplacements {
 
     # Get the file list
     local configFileList
-    readarray -t configFileList < <(find ${SANITIZE_CONFIG_DIR} -type f -name *.${SANITIZE_CONFIG_FILE_EXTENSION})
+    readarray -t configFileList < <(find "${SANITIZE_CONFIG_DIR}" \
+        -type f -name "*.${SANITIZE_CONFIG_FILE_EXTENSION}")
 
-    # If we have no configuration files then just echo the input and return
-    if [[ -z ${configFileList[@]} ]];
-    then
-        echo $data
+    # If we have no configuration files then just return
+    if [[ -z "${configFileList[*]}" ]]; then
+        eval "cat"
         return
     fi
 
@@ -66,15 +63,13 @@ function ExecuteReplacements() {
 
     # Loop over all the files and apply sed
     local currentFile
-    for currentFile in "${configFileList[@]}";
-    do
-        sedCommand="${sedCommand} | sed '$(cat ${currentFile})'"
+    for currentFile in "${configFileList[@]}"; do
+        sedCommand="${sedCommand} | sed '$(cat "${currentFile}")'"
     done
-
     eval "${sedCommand}"
 }
 
-function Main() {
+function Main {
     CheckDependencies
     CheckConfigDir
     ExecuteReplacements

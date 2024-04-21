@@ -1,0 +1,2 @@
+This data has a secret called "mypersonalusername" that will be replaced.
+This data has a secret called "123.123.123.123" that will be replaced.
