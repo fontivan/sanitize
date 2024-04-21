@@ -4,18 +4,22 @@ set -eou pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 SANITIZE_BIN_PATH="${SCRIPT_DIR}/../src/bin/sanitize"
-INPUT="input.txt"
-OUTPUT="output.txt"
 SEPARATOR="----------------------------------------------------------"
 
-function check_test_result {
+function run_test {
     local test_name
-    local actual_result
-    local expected_result
+    local config_path
 
     test_name=$1
-    actual_result=$2
-    expected_result=$3
+    config_path=$2
+
+    export SANITIZE_CONFIG_DIR="${config_path}"
+
+    local actual_result
+    local expected_result
+    actual_result=$("${SANITIZE_BIN_PATH}" < \
+        "${SCRIPT_DIR}/${test_name}/input.txt" )
+    expected_result=$(cat "${SCRIPT_DIR}/${test_name}/output.txt")
 
     if ! [[ "${actual_result}" == "${expected_result}" ]]; then
         echo "${SEPARATOR}"
@@ -40,44 +44,28 @@ function check_test_result {
     return 0
 }
 
-function test_with_config {
+function test_01_with_config {
     local test_name
-    test_name="test-with-config"
+    local config_path
 
-    export SANITIZE_CONFIG_DIR="${SCRIPT_DIR}/../src/etc"
+    test_name="01-with-config"
+    config_path="${SCRIPT_DIR}/../src/etc"
 
-    local actual_result
-    local expected_result
-    actual_result=$("${SANITIZE_BIN_PATH}" < \
-        "${SCRIPT_DIR}/${test_name}-${INPUT}" )
-    expected_result=$(cat "${SCRIPT_DIR}/${test_name}-${OUTPUT}")
-
-    if ! check_test_result \
-        "${test_name}" \
-        "${actual_result}" \
-        "${expected_result}"; then
+    if ! run_test "${test_name}" "${config_path}"; then
         return 1
     fi
 
     return 0
 }
 
-function test_without_config {
+function test_02_without_config {
     local test_name
-    test_name="test-without-config"
+    local config_path
 
-    export SANITIZE_CONFIG_DIR="${SCRIPT_DIR}"
+    test_name="02-without-config"
+    config_path="${SCRIPT_DIR}"
 
-    local actual_result
-    local expected_result
-    actual_result=$("${SANITIZE_BIN_PATH}" < \
-        "${SCRIPT_DIR}/${test_name}-${INPUT}" )
-    expected_result=$(cat "${SCRIPT_DIR}/${test_name}-${OUTPUT}")
-
-    if ! check_test_result \
-        "${test_name}" \
-        "${actual_result}" \
-        "${expected_result}"; then
+    if ! run_test "${test_name}" "${config_path}"; then
         return 1
     fi
 
@@ -93,10 +81,10 @@ function main {
 
     local result
     result=0
-    if ! test_with_config; then
+    if ! test_01_with_config; then
         result=1
     fi
-    if ! test_without_config; then
+    if ! test_02_without_config; then
         result=1
     fi
 
@@ -107,3 +95,4 @@ function main {
 }
 
 main
+exit $?
